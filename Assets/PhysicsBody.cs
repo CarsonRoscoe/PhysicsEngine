@@ -35,14 +35,54 @@ public class PhysicsBody : MonoBehaviour {
             return _momentOfInertia.Value;
         }
     }
-    
 
+    public float CurrentAngularVelocity;
+    public float AngularDisplacement;
+    public float CurrentAngularAcceleration;
+    public Vector2 CurrentVelocity;
 
 	void Start () {
 		print(string.Format("\nMass: {0}", Mass));
 		print(string.Format("\nCenterOfMass: {0}", CenterOfMass));
 		print(string.Format("\nMomentOfInertia: {0}", MomentOfInertia));
+
+        CurrentVelocity = Vector2.zero;
+        CurrentAngularVelocity = 0f;
+        AngularDisplacement = 0f;
+        CurrentAngularAcceleration = 0f;
 	}
+
+    void FixedUpdate() {
+        transform.position += (Vector3)CurrentVelocity * Time.deltaTime;
+        var degreesToRotate = -CurrentAngularVelocity * Time.deltaTime * Mathf.Rad2Deg;
+        //print(degreesToRotate);
+		transform.RotateAround(CenterOfMass, Vector3.forward, degreesToRotate);
+		AngularDisplacement += CurrentAngularVelocity * Time.deltaTime;
+        _centerOfMass = null;
+    }
+
+    //applyForce(thrusterForward.position, transform.forward, 10000);
+    public void ApplyForce(Vector2 position, float force) {
+        var direction = new Vector2(transform.right.y, transform.right.x).normalized;
+        print( transform.eulerAngles.z + " " + direction);
+        var F = force; //Newtons of force
+        var R = Vector2.Distance(CenterOfMass, position); //Distance of force position and COM
+        var forceDirectionWorld = position + direction;
+        var comDifference = CenterOfMass - position; //Difference of force position and COM
+
+        //? Two?
+        //var T = Vector2.Angle (forceDirectionWorld, comDifference);
+        var T = (CenterOfMass.x - position.x)/R;
+		//var angularAcceleration = new Vector3(0.0f, R * F * T, 0.0f) / (float)MomentOfInertia;
+		//var angularAcceleration = Vector3.Cross(comDifference, force * direction) / (float)MomentOfInertia;
+		var angularAcceleration =  R * F * T / (float)MomentOfInertia;
+		var accelerationMagnitude = F / Mass; 
+		var acceleration = direction * (float)accelerationMagnitude * Time.deltaTime; // m/s
+
+		CurrentAngularAcceleration = angularAcceleration;
+		CurrentAngularVelocity = CurrentAngularVelocity + CurrentAngularAcceleration * Time.deltaTime;
+		CurrentVelocity += acceleration;
+    }
 
     #region Variable Calculation Methods
 

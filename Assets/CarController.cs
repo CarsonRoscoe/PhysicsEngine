@@ -19,22 +19,23 @@ public class CarController : MonoBehaviour {
 	void Update () {
         //Gas
 		if (Input.GetKey(KeyCode.W)) {
-            //physicsBody.applyForce(thrusterForward.position, transform.forward, 10000);
+
+            physicsBody.ApplyForce(thrusterForward.position, 15000);
         }
 
         //Break/reverse
-        if (Input.GetKey(KeyCode.D)) {
-            //physicsBody.applyForce(thrusterForward.position, transform.forward, -10000);
+        if (Input.GetKey(KeyCode.S)) {
+            physicsBody.ApplyForce(thrusterForward.position, -15000);
         }
 
         //Turn left
         if (Input.GetKey(KeyCode.A)) {
-            //physicsBody.applyForce(thrusterTurnLeft.position, transform.forward, 5000);
+            physicsBody.ApplyForce(thrusterTurnLeft.position, 10000);
         }
 
         //Turn right
         if (Input.GetKey(KeyCode.D)) {
-            //physicsBody.applyForce(thrusterTurnRight.position, transform.forward, 5000);
+            physicsBody.ApplyForce(thrusterTurnRight.position, 10000);
         }
 	}
 }
