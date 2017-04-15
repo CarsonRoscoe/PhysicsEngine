@@ -33,10 +33,8 @@ public class PhysicsBox : RigidBody {
      * @param initOmega    The box's initial rotational velocity.
      * @param elastic      Whether the box is elastic.
      */
-    public PhysicsBox(float sideLength, Vector2 initPosition, float initRotation, float initMass, Vector2 initVel, float initOmega, bool elastic)
+    public PhysicsBox(float sideLength, Vector2 initPosition, float initRotation, float initMass, Vector2 initVel, float initOmega, bool elastic) : base(initMass, initPosition, initRotation, initVel, initOmega)
     {
-        base(initMass, initPosition, initRotation, initVel, initOmega);
-        
         circleRadius = Mathf.Sqrt(((sideLength / 2) * (sideLength / 2)) +
                         ((sideLength / 2) * (sideLength / 2)));
         isElastic = elastic;
@@ -64,9 +62,9 @@ public class PhysicsBox : RigidBody {
             vertices[i] = initVertices[i];
         }
         
-        for(int i = 0; i < vertices.length; i++)
+        for(int i = 0; i < vertices.Length; i++)
         {
-            Vector2 nextV = i == vertices.length - 1 ? vertices[0] : vertices[i + 1];
+            Vector2 nextV = i == vertices.Length - 1 ? vertices[0] : vertices[i + 1];
             Pair<Vector2, Vector2> edge = new Pair<Vector2, Vector2>(vertices[i], nextV);
             edges.Add(edge);
         }
@@ -88,7 +86,7 @@ public class PhysicsBox : RigidBody {
         Vector2 position = getPosition();
         // Update all of the vertex positions based on the box's current position
         // and rotation
-        for(int i = 0; i < vertices.length; i++)
+        for(int i = 0; i < vertices.Length; i++)
         {
             vertices[i].x = initVertices[i].x;
             vertices[i].y = initVertices[i].y;
@@ -123,7 +121,7 @@ public class PhysicsBox : RigidBody {
         return (float)((this.mass * (Mathf.Pow(sideLen, 2) + Mathf.Pow(sideLen, 2))) / 12);
     }
 
-    public void setAngularVelocity(float vel)
+    public override void setAngularVelocity(float vel)
     {
         
     }

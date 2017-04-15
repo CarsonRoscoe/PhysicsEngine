@@ -33,10 +33,8 @@ public class PhysicsRect : RigidBody
     private Vector2[] initialVerts;
     private List<Pair<Vector2, Vector2>> edges;
 
-    public PhysicsRect(float x, float y, float width, float height, Color colour, float mass, float rotation)
+    public PhysicsRect(float x, float y, float width, float height, Color colour, float mass, float rotation) :  base(mass, new Vector2(x, y), rotation, new Vector2(0, 0), 0f)
     {
-        base(mass, new Vector2(x, y), rotation, new Vector2(0, 0), 0f);
-        
         velocityTotal =  new Vector2(0,0);
         this.width = width;
         this.height = height;
@@ -59,14 +57,14 @@ public class PhysicsRect : RigidBody
         
         vertices = new Vector2[4];
         edges = new List<Pair<Vector2, Vector2>>(initialVerts.Length);
-        for(int i = 0; i < vertices.length; i++)
+        for(int i = 0; i < vertices.Length; i++)
         {
             vertices[i] = initialVerts[i];
         }
         
-        for(int i = 0; i < vertices.length; i++)
+        for(int i = 0; i < vertices.Length; i++)
         {
-            Vector2 nextV = i == vertices.length - 1 ? vertices[0] : vertices[i + 1];
+            Vector2 nextV = i == vertices.Length - 1 ? vertices[0] : vertices[i + 1];
             Pair<Vector2, Vector2> edge = new Pair<Vector2, Vector2>(vertices[i], nextV);
             edges.Add(edge);
         }
@@ -368,7 +366,7 @@ public class PhysicsRect : RigidBody
         forcePosition.rotate(rotationThisFrame);
         forcePosition.add(COM);
 
-        final float eToCoeff = (float)Mathf.Pow(Mathf.E, -dragCoefficient * time/totalMass);
+        float eToCoeff = (float)Mathf.Pow(Mathf.E, -dragCoefficient * time/totalMass);
         velocity.x = 1/dragCoefficient * (force.x - eToCoeff * (force.x - dragCoefficient * velocity.x));
         velocity.y = 1/dragCoefficient * (force.y - eToCoeff * (force.y - dragCoefficient * velocity.y));
 
