@@ -11,7 +11,7 @@ using UnityEngine;
 *
 * @author Shane
 */
-public abstract class RigidBody {
+public abstract class RigidBody : MonoBehaviour {
     public float mass;
     public Vector2 position;
     public float rotation;
@@ -19,8 +19,7 @@ public abstract class RigidBody {
     public float angularVelocity;
     protected Vector2[] vertices;
 
-    public RigidBody(float initMass, Vector2 initPosition, float initRotation,
-                       Vector2 initVel, float initAngleVel)
+    public void init(float initMass, Vector2 initPosition, float initRotation, Vector2 initVel, float initAngleVel)
     {
         mass = initMass;
         position = initPosition;
@@ -47,12 +46,6 @@ public abstract class RigidBody {
      * @return The radius of the object's bounding circle.
      */
     public abstract double getBoundingCircleRadius();
-    
-    /**
-     * Update this object's physical state with the given time interval.
-     * @param time The time interval over which to integrate.
-     */
-    public abstract void update(float time);
     
     /**
      * Update this object's vertex positions based on its current position. 

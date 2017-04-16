@@ -15,17 +15,17 @@ public class PhysicsRect : RigidBody
     public static float LEFT_RIGHT_FORCE_MAG = 5000;
     public static float BACK_FORWARD_FORCE_MAG = 10000;
     
-    Vector2 COM;
-    Vector2 radial;
-    Vector2 forcePosition;
-    Vector2 velocityTotal;
-    float momentOfInertia;
-    float width;
-    float height;
-    Color colour;
-    Vector2 force;
-    float linearAccel;
-    float angularAccel;
+    public Vector2 COM;
+    public Vector2 radial;
+    public Vector2 forcePosition;
+    public Vector2 velocityTotal;
+    public float momentOfInertia;
+    public float width;
+    public float height;
+    public Color colour;
+    public Vector2 force;
+    public float linearAccel;
+    public float angularAccel;
     public float dragCoefficient = 250;
     public List<PhysicsRect> childRects;
     private int currentForces;
@@ -33,12 +33,13 @@ public class PhysicsRect : RigidBody
     private Vector2[] initialVerts;
     private List<Pair<Vector2, Vector2>> edges;
 
-    public PhysicsRect(float x, float y, float width, float height, Color colour, float mass, float rotation) :  base(mass, new Vector2(x, y), rotation, new Vector2(0, 0), 0f)
+    public void init(float x, float y, float width, float height, Color colour, float mass, float rotation)
     {
+        base.init(mass, new Vector2(x, y), rotation, new Vector2(0, 0), 0f);
         velocityTotal =  new Vector2(0,0);
-        this.width = width;
-        this.height = height;
-        this.colour = colour;
+        this.width = transform.localScale.x;
+        this.height = transform.localScale.y;
+        //this.colour = colour;
         childRects = new List<PhysicsRect>();
         COM = new Vector2();
         force = new Vector2();
@@ -97,9 +98,8 @@ public class PhysicsRect : RigidBody
         pos -= position;
         pos.rotate(rotation);
         pos += position;*/
-
-        //TODO: MainThruster
-        return Vector2.zero;//pos;
+        
+        return GameObject.Find("ThrusterPoint").transform.position;//pos;
     }
 
     public Vector2 turnLeftForceLocation()
@@ -108,9 +108,8 @@ public class PhysicsRect : RigidBody
         pos.sub(position);
         pos.rotate(rotation);
         pos.add(position);*/
-
-        //TODO: LeftTurnThruster:
-        return Vector2.zero;//pos
+        
+        return GameObject.Find("LeftTurnPoint").transform.position;//pos
     }
 
     public Vector2 turnRightForceLocation()
@@ -119,9 +118,8 @@ public class PhysicsRect : RigidBody
         pos.sub(position);
         pos.rotate(rotation);
         pos.add(position);*/
-
-        //TODO: RightTurnThruster
-        return Vector2.zero;//pos;
+        
+        return GameObject.Find("RightTurnPoint").transform.position;//pos;
     }
 
     public void addChild(PhysicsRect rect)
@@ -216,12 +214,7 @@ public class PhysicsRect : RigidBody
     {
         Vector2 r = radial;
         Vector2 f = force;
-        float t = Vector3.Cross(r, f).z;
-
-        float angularAccel = 0.0f;
-        angularAccel = t / I;
-
-        return angularAccel;
+        return Vector3.Cross(r, f).z / I;
     }
 
     public override double getBoundingCircleRadius()
@@ -246,45 +239,54 @@ public class PhysicsRect : RigidBody
      * @param time The amount of time (in seconds) that has elapsed since the last
      * update.
      */
-    public override void update(float time)
+    public void Update()
     {
-        forcePosition.x = 0;
-        forcePosition.y = 0;
+        if (gameObject.name != "Car")
+            return;
+        if (dragCoefficient == 0)
+            dragCoefficient = 100f;
+        var angularDrag = 3f;
+
+        forcePosition = Vector2.zero;
         int numForces = 0;
-        force.y = 0;
-        force.x = 0;
+        force = Vector2.zero;
 
         // Determine which forces are active and average their positions and
         // magnitudes
         if ((currentForces & TURNING_RIGHT_FORCE) != 0)
         {
+            //print("TURNING RIGHT");
             numForces++;
-
-            forcePosition.x += position.x + width/2;
-            forcePosition.y += position.y + height/2;
+            //turnRightForceLocation();
+            forcePosition += new Vector2(position.x + width/2, position.y + height/2 );
             force.x += LEFT_RIGHT_FORCE_MAG;
         }
 
         if ((currentForces & TURNING_LEFT_FORCE) != 0)
         {
+            //print("TURNING LEFT");
             numForces++;
 
             forcePosition.x += position.x + width/2;
             forcePosition.y += position.y - height/2;
+            //forcePosition += turnLeftForceLocation();
             force.x += LEFT_RIGHT_FORCE_MAG;
         }
 
         if ((currentForces & FORWARD_FORCE) != 0)
         {
+            //print("FORWARD");
             numForces++;
 
             forcePosition.x += position.x - width/2;
             forcePosition.y += position.y;
+            //forcePosition += backForwardForceLocation();
             force.x += BACK_FORWARD_FORCE_MAG;
         }
 
         if((currentForces & BACKWARD_FORCE) != 0)
         {
+            //print("BACKWARDS");
             numForces++;
 
             forcePosition.x += position.x - width/2;
@@ -292,21 +294,23 @@ public class PhysicsRect : RigidBody
             force.x -= BACK_FORWARD_FORCE_MAG;
         }
 
+        //print(string.Format("{0} {1} {2} {3}", TURNING_LEFT_FORCE, TURNING_RIGHT_FORCE, FORWARD_FORCE, BACKWARD_FORCE));
+
         // Average the forces
         numForces = numForces == 0 ? 1 : numForces; // Make this 1 to avoid dividing by 0
         forcePosition.x /= numForces;
         forcePosition.y /= numForces;
 
-        forcePosition.sub(position); //TODO: Here
-        forcePosition.rotate(rotation);
-        forcePosition.add(position);
-        force.rotate(rotation);
+        forcePosition -= (position); //TODO: Here
+        forcePosition = forcePosition.Rotate(rotation);
+        forcePosition += (position);
+        force = force.Rotate(rotation);
 
+        //print(force.ToString() + " " + forcePosition.ToString());
         // Calculate COM
         float totalMass = mass;
         COM.x = position.x * mass;
         COM.y = position.y * mass;
-
         foreach (PhysicsRect rect in childRects)
         {
             COM.x += rect.position.x * rect.mass;
@@ -322,56 +326,69 @@ public class PhysicsRect : RigidBody
         // update vel, accel, and position
         radial.x = forcePosition.x - COM.x;
         radial.y = forcePosition.y - COM.y;
+        print(radial);
 
-        Vector2 acceleration = new Vector2(force.x/totalMass, force.y/totalMass);
+        Vector2 acceleration = force / totalMass;
         this.momentOfInertia = getMomentOfInertia();
 
         float angularAcceleration = determineAngularAcceleration(momentOfInertia);
 
         // Determine Angular Velocity
         float angularForce = (angularAcceleration * totalMass);
-        angularVelocity = 1/dragCoefficient * (angularForce - (float)Mathf.Pow(Mathf.E, -dragCoefficient * time/totalMass) * (angularForce - dragCoefficient * angularVelocity));
+        var oldVelocity = angularVelocity;
+        //print(angularAcceleration);
+        //angularVelocity + angularAcceleration * Time.deltaTime;//
+        angularVelocity = 1/angularDrag * (angularForce - (float)Mathf.Exp(-angularDrag * Time.deltaTime/totalMass) * (angularForce - angularDrag * angularVelocity));
+        //print(string.Format("{0} = 1/{1} * ({2} - Mathf.Exp(-{1} * {3}/{4}) * ({2} - {1} * {5})) where Exp = {6}", 
+        //                    angularVelocity, dragCoefficient, angularForce, Time.deltaTime, totalMass, oldVelocity, (float)Mathf.Exp(-dragCoefficient * Time.deltaTime/totalMass)));
 
-        float rotationThisFrame =  angularVelocity  * time * (float)(180/Mathf.PI);
-        rotation += rotationThisFrame;
+        float rotationThisFrame =  angularVelocity * Time.deltaTime * Mathf.Rad2Deg;
+        rotation += rotationThisFrame / totalMass;
 
         // Determine Velocity
-        linearAccel = acceleration.x;
-        velocity.x += acceleration.x * time;
-        velocity.y += acceleration.y * time;
+        //linearAccel = acceleration.x;
+        velocity.x += acceleration.x * Time.deltaTime;
+        velocity.y += acceleration.y * Time.deltaTime;
 
         // update position
-        COM.x += velocity.x * time;
-        COM.y += velocity.y * time;
-
-        position.x += velocity.x * time;
-        position.y += velocity.y * time;
-        position.sub(COM);
-        position.rotate(rotationThisFrame);
-        position.add(COM);
-
+        COM.x += velocity.x * Time.deltaTime;
+        COM.y += velocity.y * Time.deltaTime;
+        
+        position.x += velocity.x * Time.deltaTime;
+        position.y += velocity.y * Time.deltaTime;
+        position -= (COM);
+        position = position.Rotate(rotationThisFrame);
+        position += (COM);
+        
         foreach (PhysicsRect rect in childRects)
         {
-            rect.position.x += velocity.x * time;
-            rect.position.y += velocity.y * time;
+            rect.position.x += velocity.x * Time.deltaTime;
+            rect.position.y += velocity.y * Time.deltaTime;
             rect.rotation = rotation;
-            rect.position.sub(COM);
-            rect.position.rotate(rotationThisFrame);
-            rect.position.add(COM);
+            rect.position -= (COM);
+            rect.position = rect.position.Rotate(rotationThisFrame);
+            rect.position += (COM);
         }
+        
+        forcePosition.x  += velocity.x * Time.deltaTime;
+        forcePosition.y  += velocity.x * Time.deltaTime;
+        forcePosition -= (COM); //TODO: Here
+        forcePosition = forcePosition.Rotate(rotationThisFrame);
+        forcePosition += (COM);
 
-        forcePosition.x  += velocity.x * time;
-        forcePosition.y  += velocity.x * time;
-        forcePosition.sub(COM); //TODO: Here
-        forcePosition.rotate(rotationThisFrame);
-        forcePosition.add(COM);
-
-        float eToCoeff = (float)Mathf.Pow(Mathf.E, -dragCoefficient * time/totalMass);
+        float eToCoeff = (float)Mathf.Exp(-dragCoefficient * Time.deltaTime/totalMass);
+        
         velocity.x = 1/dragCoefficient * (force.x - eToCoeff * (force.x - dragCoefficient * velocity.x));
         velocity.y = 1/dragCoefficient * (force.y - eToCoeff * (force.y - dragCoefficient * velocity.y));
-
+        
         updateVertices();
+
+        transform.position = position;
+        transform.rotation = Quaternion.identity;
+        transform.RotateAround(transform.position, Vector3.forward, rotation);
+        _rotation++;
     }
+    float _rotation;
 
    public override void setAngularVelocity(float vel)
     {
@@ -395,7 +412,7 @@ public class PhysicsRect : RigidBody
         {
             vertices[i].x = initialVerts[i].x;
             vertices[i].y = initialVerts[i].y;
-            vertices[i].rotate(rotation);
+            vertices[i] = vertices[i].Rotate(rotation);
             vertices[i].x += position.x;
             vertices[i].y += position.y;
         }

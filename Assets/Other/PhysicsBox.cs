@@ -33,8 +33,9 @@ public class PhysicsBox : RigidBody {
      * @param initOmega    The box's initial rotational velocity.
      * @param elastic      Whether the box is elastic.
      */
-    public PhysicsBox(float sideLength, Vector2 initPosition, float initRotation, float initMass, Vector2 initVel, float initOmega, bool elastic) : base(initMass, initPosition, initRotation, initVel, initOmega)
+    public void init(float sideLength, Vector2 initPosition, float initRotation, float initMass, Vector2 initVel, float initOmega, bool elastic)
     {
+        base.init(initMass, initPosition, initRotation, initVel, initOmega);
         circleRadius = Mathf.Sqrt(((sideLength / 2) * (sideLength / 2)) +
                         ((sideLength / 2) * (sideLength / 2)));
         isElastic = elastic;
@@ -68,16 +69,19 @@ public class PhysicsBox : RigidBody {
             Pair<Vector2, Vector2> edge = new Pair<Vector2, Vector2>(vertices[i], nextV);
             edges.Add(edge);
         }
+
         updateVertices();
     }
     
-    public override void update(float deltaTime)
+    public void Update()
     {
         Vector2 position = getPosition();
-        rotation += angularVelocity * deltaTime * (float)(180/Mathf.PI);
-        position.x += velocity.x * deltaTime;
-        position.y += velocity.y * deltaTime;
+        rotation += angularVelocity * Time.deltaTime * (float)(180/Mathf.PI);
+        position.x += velocity.x * Time.deltaTime;
+        position.y += velocity.y * Time.deltaTime;
 
+        transform.position = position / 2.0f;
+        
         updateVertices();
     }
 
@@ -90,7 +94,7 @@ public class PhysicsBox : RigidBody {
         {
             vertices[i].x = initVertices[i].x;
             vertices[i].y = initVertices[i].y;
-            vertices[i].rotate(rotation);
+            vertices[i] = vertices[i].Rotate(rotation); //TODO: This
             vertices[i].x += position.x;
             vertices[i].y += position.y;
         }
@@ -126,3 +130,17 @@ public class PhysicsBox : RigidBody {
         
     }
 }
+
+public static class Vector2Extension {
+     
+     public static Vector2 Rotate(this Vector2 v, float degrees) {
+         float sin = Mathf.Sin(degrees * Mathf.Deg2Rad);
+         float cos = Mathf.Cos(degrees * Mathf.Deg2Rad);
+         
+         float tx = v.x;
+         float ty = v.y;
+         v.x = (cos * tx) - (sin * ty);
+         v.y = (sin * tx) + (cos * ty);
+         return v;
+     }
+ }
